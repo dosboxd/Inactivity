@@ -7,7 +7,11 @@
 
 import Combine
 import Foundation
+#if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
+#endif
 
 public class InactivityWatcher: ObservableObject {
     @Published public private(set) var stateChanged: InactivityState = .inactive
@@ -18,11 +22,19 @@ public class InactivityWatcher: ObservableObject {
     public static let shared = InactivityWatcher()
 
     private init() {
+        #if os(iOS)
         let uiAppClass = UIApplication.self
         let currentSendEvent = class_getInstanceMethod(uiAppClass, #selector(uiAppClass.sendEvent))
         let newSendEvent = class_getInstanceMethod(uiAppClass, #selector(uiAppClass.newSendEvent))
         method_exchangeImplementations(currentSendEvent!, newSendEvent!)
         print("sendEvent Swizzled")
+        #elseif os(macOS)
+        let uiAppClass = NSApplication.self
+        let currentSendEvent = class_getInstanceMethod(uiAppClass, #selector(uiAppClass.sendEvent))
+        let newSendEvent = class_getInstanceMethod(uiAppClass, #selector(uiAppClass.newSendEvent))
+        method_exchangeImplementations(currentSendEvent!, newSendEvent!)
+        print("sendEvent Swizzled")
+        #endif
     }
     
     public func startWatch(timeout: TimeInterval) {
